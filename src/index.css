@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .score-badge-excellent {
+    @apply bg-green-600 text-white;
+  }
+  .score-badge-good {
+    @apply bg-lime-600 text-white;
+  }
+  .score-badge-average {
+    @apply bg-yellow-500 text-white;
+  }
+  .score-badge-poor {
+    @apply bg-red-600 text-white;
+  }
+
+  .score-bar-fill-excellent {
+    @apply bg-green-500;
+  }
+  .score-bar-fill-good {
+    @apply bg-lime-500;
+  }
+  .score-bar-fill-average {
+    @apply bg-yellow-400;
+  }
+  .score-bar-fill-poor {
+    @apply bg-red-500;
+  }
+}
