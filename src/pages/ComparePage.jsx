@@ -135,6 +135,7 @@ export default function ComparePage({ onRemove }) {
             <div>Prijs: {car.scores.breakdown.price}</div>
             <div>Km: {car.scores.breakdown.mileage}</div>
             <div>Jaar: {car.scores.breakdown.year}</div>
+            <div>Brandstof: {car.scores.breakdown.fuel}</div>
             <div>Uitrusting: {car.scores.breakdown.features}</div>
           </div>
         </div>

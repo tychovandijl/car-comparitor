@@ -93,6 +93,7 @@ export default function CarCard({ car, isSelected, onToggleCompare }) {
             <ScoreBar label="Prijs" value={scores.breakdown.price} scoreClass={scores.class} />
             <ScoreBar label="Kilometerstand" value={scores.breakdown.mileage} scoreClass={scores.class} />
             <ScoreBar label="Bouwjaar" value={scores.breakdown.year} scoreClass={scores.class} />
+            <ScoreBar label="Brandstof" value={scores.breakdown.fuel} scoreClass={scores.class} />
             <ScoreBar label="Uitrusting" value={scores.breakdown.features} scoreClass={scores.class} />
           </div>
         )}

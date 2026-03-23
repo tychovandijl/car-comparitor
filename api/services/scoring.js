@@ -3,10 +3,30 @@ const MAX_KM = 300000;
 const MAX_AGE = 20;
 
 const WEIGHTS = {
-  price: 0.40,
+  price: 0.35,
   mileage: 0.25,
   year: 0.20,
-  features: 0.15,
+  fuel: 0.10,
+  features: 0.10,
+};
+
+// Hogere score = toekomstbestendiger / lagere brandstofkosten
+const FUEL_SCORES = {
+  'elektrisch': 100,
+  'electric': 100,
+  'waterstof': 100,
+  'plug-in hybrid': 85,
+  'plug-in hybride': 85,
+  'elektro/benzine': 80,
+  'elektro/diesel': 80,
+  'hybride': 70,
+  'hybrid': 70,
+  'mild hybrid': 65,
+  'lpg': 55,
+  'cng': 55,
+  'benzine': 45,
+  'petrol': 45,
+  'diesel': 40,
 };
 
 function median(values) {
@@ -41,6 +61,15 @@ function scorePrice(price, comparablePrices) {
   // Prijs 50% boven mediaan → 0 pts
   const ratio = price / med;
   return clamp(100 - (ratio - 0.5) * 100, 0, 100);
+}
+
+function scoreFuel(fuel) {
+  if (!fuel) return 50;
+  const key = fuel.toLowerCase().trim();
+  for (const [pattern, score] of Object.entries(FUEL_SCORES)) {
+    if (key.includes(pattern)) return score;
+  }
+  return 50;
 }
 
 function scoreFeatures(featureCount, maxFeatures) {
@@ -89,12 +118,14 @@ function scoreCars(cars) {
     const priceScore = scorePrice(car.price, comparablePrices);
     const mileageScore = scoreMileage(car.mileage);
     const yearScore = scoreYear(car.year);
+    const fuelScore = scoreFuel(car.fuel);
     const featuresScore = scoreFeatures((car.features || []).length, maxFeatures);
 
     const total = Math.round(
       priceScore * WEIGHTS.price +
       mileageScore * WEIGHTS.mileage +
       yearScore * WEIGHTS.year +
+      fuelScore * WEIGHTS.fuel +
       featuresScore * WEIGHTS.features
     );
 
@@ -110,6 +141,7 @@ function scoreCars(cars) {
           price: Math.round(priceScore),
           mileage: Math.round(mileageScore),
           year: Math.round(yearScore),
+          fuel: Math.round(fuelScore),
           features: Math.round(featuresScore),
         },
       },
