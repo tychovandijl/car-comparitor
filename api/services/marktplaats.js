@@ -37,16 +37,14 @@ function mapListing(item) {
   (item.attributes || []).forEach(a => { attrs[a.key] = a.value; });
 
   const price = item.priceInfo?.priceCents ? item.priceInfo.priceCents / 100 : null;
-  const year = attrs.bouwjaar ? parseInt(attrs.bouwjaar) : null;
-  const mileage = attrs.kilometrageRange
-    ? parseInt(String(attrs.kilometrageRange).replace(/\./g, '').match(/\d+/)?.[0]) || null
-    : null;
+  const year = attrs.constructionYear ? parseInt(attrs.constructionYear) : null;
+  const mileage = attrs.mileage ? parseInt(String(attrs.mileage).replace(/\./g, '').match(/\d+/)?.[0]) ?? null : null;
 
   return {
     id: `marktplaats-${item.itemId}`,
     source: 'marktplaats',
     title: item.title || '',
-    brand: attrs.merk || extractBrand(item.title),
+    brand: attrs.make || attrs.merk || extractBrand(item.title),
     model: attrs.model || '',
     year,
     mileage,
@@ -69,11 +67,12 @@ function extractFeatures(item) {
   const attrs = {};
   (item.attributes || []).forEach(a => { attrs[a.key] = a.value; });
 
-  if (attrs.transmissie) features.push(attrs.transmissie);
-  if (attrs.brandstof) features.push(attrs.brandstof);
-  if (attrs.carrosserie) features.push(attrs.carrosserie);
-  if (attrs.klimaatbeheersing) features.push('Airco');
-  if (attrs.trekgewicht) features.push('Trekhaak');
+  if (attrs.transmission) features.push(attrs.transmission);
+  if (attrs.fuel) features.push(attrs.fuel);
+  if (attrs.body) features.push(attrs.body);
+  if (attrs.options) features.push(...attrs.options.split(',').map(s => s.trim()).filter(Boolean));
+  if (attrs.airConditioning) features.push('Airco');
+  if (attrs.towBar) features.push('Trekhaak');
   if (item.description) {
     const desc = item.description.toLowerCase();
     if (desc.includes('navigatie') || desc.includes('navi')) features.push('Navigatie');
