@@ -104,19 +104,39 @@ export default function ComparePage({ onRemove }) {
     },
     {
       label: 'Uitrusting',
-      render: car => (
-        <div>
-          <div className="flex flex-wrap gap-1 mb-1">
-            {(car.features || []).map(f => (
-              <span key={f} className="text-[10px] bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{f}</span>
-            ))}
+      render: car => {
+        const scored = car.scores?.featuresDetail?.scored || [];
+        const unscored = car.scores?.featuresDetail?.unscored || [];
+        return (
+          <div className="space-y-2">
+            {scored.length > 0 && (
+              <div>
+                <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1">Gescoord</div>
+                <div className="flex flex-col gap-0.5">
+                  {scored.map(f => (
+                    <div key={f.name} className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-gray-700">{f.name}</span>
+                      <span className="text-[10px] font-semibold text-green-700 bg-green-50 rounded px-1.5 py-0.5 shrink-0">+{f.points}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {unscored.length > 0 && (
+              <div>
+                <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1">Overig</div>
+                <div className="flex flex-wrap gap-1">
+                  {unscored.map(f => (
+                    <span key={f} className="text-[10px] bg-gray-100 text-gray-500 rounded px-1.5 py-0.5">{f}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {scored.length === 0 && unscored.length === 0 && <span className="text-xs text-gray-400">—</span>}
+            <BestMark isBest={(car.features || []).length === bestFeatures} />
           </div>
-          {(car.features || []).length > 0 && (
-            <span className="text-xs text-gray-400">{car.features.length} items</span>
-          )}
-          <BestMark isBest={(car.features || []).length === bestFeatures} />
-        </div>
-      ),
+        );
+      },
     },
     {
       label: 'Score',

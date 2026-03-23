@@ -119,15 +119,24 @@ const FEATURE_SCORES = {
 };
 
 function scoreFeatures(features) {
-  if (!features || features.length === 0) return 0;
+  if (!features || features.length === 0) return { score: 0, scored: [], unscored: [] };
   let total = 0;
+  const scored = [];
+  const unscored = [];
   for (const feature of features) {
     const f = feature.toLowerCase();
+    let matched = false;
     for (const [keyword, pts] of Object.entries(FEATURE_SCORES)) {
-      if (f.includes(keyword)) { total += pts; break; }
+      if (f.includes(keyword)) {
+        total += pts;
+        scored.push({ name: feature, points: pts });
+        matched = true;
+        break;
+      }
     }
+    if (!matched) unscored.push(feature);
   }
-  return clamp(total, 0, 100);
+  return { score: clamp(total, 0, 100), scored, unscored };
 }
 
 function getComparablePrices(car, allCars) {
@@ -170,7 +179,8 @@ function scoreCars(cars) {
     const mileageScore = scoreMileage(car.mileage);
     const yearScore = scoreYear(car.year);
     const fuelScore = scoreFuel(car.fuel);
-    const featuresScore = scoreFeatures(car.features);
+    const featuresResult = scoreFeatures(car.features);
+    const featuresScore = featuresResult.score;
 
     const total = Math.round(
       priceScore * WEIGHTS.price +
@@ -194,6 +204,10 @@ function scoreCars(cars) {
           year: Math.round(yearScore),
           fuel: Math.round(fuelScore),
           features: Math.round(featuresScore),
+        },
+        featuresDetail: {
+          scored: featuresResult.scored,
+          unscored: featuresResult.unscored,
         },
       },
     };
