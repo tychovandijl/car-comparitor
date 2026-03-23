@@ -90,6 +90,23 @@ function mapListing(item) {
   if (fuel) features.push(fuel);
   if (item.vehicle?.bodyType) features.push(item.vehicle.bodyType);
 
+  // Highlights (bijv. ["Navigatie", "Cruise control", "Apple CarPlay"])
+  if (Array.isArray(item.highlights)) {
+    for (const h of item.highlights) {
+      if (typeof h === 'string') features.push(h);
+      else if (h?.label) features.push(h.label);
+    }
+  }
+  // Equipment uit vehicle object
+  if (Array.isArray(item.vehicle?.equipment)) {
+    features.push(...item.vehicle.equipment.filter(e => typeof e === 'string'));
+  }
+  // Overige vehicleDetails die nog niet zijn opgenomen
+  const skipLabels = new Set(['Bouwjaar', 'Brandstof', 'Transmissie']);
+  for (const d of (item.vehicleDetails || [])) {
+    if (!skipLabels.has(d.ariaLabel) && d.data) features.push(d.data);
+  }
+
   // Versie uit URL-slug extraheren (bijv. "tucson-1-6-t-gdi-plug-in-hybrid-exellence")
   const version = extractVersionFromUrl(item.url, item.vehicle?.make, item.vehicle?.model);
 
