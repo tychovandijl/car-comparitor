@@ -1,75 +1,96 @@
 const axios = require('axios');
 
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minuten
+const CACHE_TTL_MS = 10 * 60 * 1000;
 const cache = new Map();
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'application/json, text/plain, */*',
-  'Accept-Language': 'nl-NL,nl;q=0.9,en;q=0.8',
-  'Referer': 'https://www.autoscout24.nl/',
+  'Accept': 'text/html,application/xhtml+xml',
+  'Accept-Language': 'nl-NL,nl;q=0.9',
 };
 
-// AutoScout24 interne JSON API
-async function fetchAS24Json(params) {
-  // AutoScout24 heeft een publieke search API
-  const apiUrl = new URL('https://www.autoscout24.nl/api/v1/search');
-  if (params.brand) apiUrl.searchParams.set('make', params.brand);
-  if (params.model) apiUrl.searchParams.set('model', params.model);
-  if (params.minYear) apiUrl.searchParams.set('fregfrom', params.minYear);
-  if (params.maxYear) apiUrl.searchParams.set('fregto', params.maxYear);
-  if (params.minPrice) apiUrl.searchParams.set('pricefrom', params.minPrice);
-  if (params.maxPrice) apiUrl.searchParams.set('priceto', params.maxPrice);
-  if (params.maxKm) apiUrl.searchParams.set('kmto', params.maxKm);
-  if (params.query) apiUrl.searchParams.set('search', params.query);
-  apiUrl.searchParams.set('atype', 'C');
-  apiUrl.searchParams.set('cy', 'NL');
-  apiUrl.searchParams.set('size', '50');
+function buildSearchUrl(params) {
+  // URL formaat: /lst/{make}/{model} of /lst/{make}
+  let base = 'https://www.autoscout24.nl/lst';
+  const brand = params.brand || extractBrandFromQuery(params.query);
+  const model = params.model || extractModelFromQuery(params.query, brand);
 
-  const response = await axios.get(apiUrl.toString(), {
-    headers: {
-      ...HEADERS,
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-    timeout: 5000,
-  });
-  return response.data;
+  if (brand) base += '/' + encodeURIComponent(brand.toLowerCase());
+  if (model) base += '/' + encodeURIComponent(model.toLowerCase().replace(/\s+/g, '-'));
+
+  const url = new URL(base);
+  url.searchParams.set('atype', 'C');
+  url.searchParams.set('cy', 'NL');
+  url.searchParams.set('ustate', 'N,U');
+  url.searchParams.set('size', '20');
+  url.searchParams.set('page', '1');
+  if (params.minYear) url.searchParams.set('fregfrom', params.minYear);
+  if (params.maxYear) url.searchParams.set('fregto', params.maxYear);
+  if (params.minPrice) url.searchParams.set('pricefrom', params.minPrice);
+  if (params.maxPrice) url.searchParams.set('priceto', params.maxPrice);
+  if (params.maxKm) url.searchParams.set('kmto', params.maxKm);
+  return url.toString();
+}
+
+function extractBrandFromQuery(query) {
+  if (!query) return '';
+  return query.trim().split(/\s+/)[0] || '';
+}
+
+function extractModelFromQuery(query, brand) {
+  if (!query || !brand) return '';
+  return query.trim().slice(brand.length).trim();
+}
+
+function parsePrice(priceFormatted) {
+  if (!priceFormatted) return null;
+  const digits = priceFormatted.replace(/[^0-9]/g, '');
+  return digits ? parseInt(digits) : null;
+}
+
+function parseMileage(mileageStr) {
+  if (!mileageStr) return null;
+  const digits = String(mileageStr).replace(/[^0-9]/g, '');
+  return digits ? parseInt(digits) : null;
+}
+
+function parseYear(vehicleDetails) {
+  const entry = (vehicleDetails || []).find(d => d.ariaLabel === 'Bouwjaar');
+  if (!entry?.data) return null;
+  // Formaat: "MM/YYYY"
+  const parts = entry.data.split('/');
+  const year = parseInt(parts[parts.length - 1]);
+  return year > 1900 && year <= new Date().getFullYear() + 1 ? year : null;
 }
 
 function mapListing(item) {
-  const price = item.price?.value || item.firstRegistrationPrice?.value || null;
-  const year = item.firstRegistration
-    ? parseInt(item.firstRegistration.split('/').pop() || item.firstRegistration)
-    : item.firstRegistrationYear || null;
-  const mileage = item.mileage?.value || null;
+  const price = parsePrice(item.price?.priceFormatted);
+  const mileage = parseMileage(item.vehicle?.mileageInKm);
+  const year = parseYear(item.vehicleDetails);
 
   const features = [];
-  if (item.transmissionType) features.push(item.transmissionType === 'A' ? 'Automaat' : 'Handgeschakeld');
-  if (item.fuelType) features.push(mapFuelType(item.fuelType));
-  if (item.vehicleDetails?.bodyType) features.push(item.vehicleDetails.bodyType);
-  (item.equipment || []).slice(0, 5).forEach(e => features.push(e));
+  const detail = (label) => (item.vehicleDetails || []).find(d => d.ariaLabel === label)?.data;
+  if (detail('Transmissie')) features.push(detail('Transmissie'));
+  if (detail('Brandstof')) features.push(detail('Brandstof'));
+  if (item.vehicle?.bodyType) features.push(item.vehicle.bodyType);
+
+  const imageUrl = typeof item.images?.[0] === 'string'
+    ? item.images[0]
+    : item.images?.[0]?.url || null;
 
   return {
     id: `autoscout24-${item.id}`,
     source: 'autoscout24',
-    title: `${item.make || ''} ${item.model || ''}`.trim() || item.title || '',
-    brand: item.make || '',
-    model: item.model || '',
+    title: `${item.vehicle?.make || ''} ${item.vehicle?.model || ''}`.trim(),
+    brand: item.vehicle?.make || '',
+    model: item.vehicle?.model || '',
     year,
     mileage,
     price,
     features: [...new Set(features.filter(Boolean))],
-    imageUrl: item.images?.[0]?.url || item.previewImage?.url || null,
-    adUrl: item.url
-      ? `https://www.autoscout24.nl${item.url}`
-      : `https://www.autoscout24.nl/auto/${item.id}`,
+    imageUrl,
+    adUrl: item.url ? `https://www.autoscout24.nl${item.url}` : null,
   };
-}
-
-function mapFuelType(code) {
-  const map = { B: 'Benzine', D: 'Diesel', E: 'Elektrisch', H: 'Hybride', L: 'LPG', C: 'CNG' };
-  return map[code] || code;
 }
 
 async function searchCars(params) {
@@ -79,17 +100,26 @@ async function searchCars(params) {
     return cached.data;
   }
 
+  const url = buildSearchUrl(params);
+
   try {
-    const data = await fetchAS24Json(params);
-    const listings = data?.listings || data?.results || data?.data?.listings || [];
+    const response = await axios.get(url, { headers: HEADERS, timeout: 10000 });
+    const html = response.data;
+
+    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/);
+    if (!match) return [];
+
+    const json = JSON.parse(match[1]);
+    const listings = json.props?.pageProps?.listings || [];
+
     const cars = listings
       .map(mapListing)
-      .filter(c => c.price && c.year && c.mileage !== null);
+      .filter(c => c.price && c.year);
 
     cache.set(cacheKey, { data: cars, timestamp: Date.now() });
     return cars;
   } catch (err) {
-    console.error('AutoScout24 API error:', err.message);
+    console.error('AutoScout24 error:', err.message);
     return [];
   }
 }
