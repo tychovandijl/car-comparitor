@@ -18,17 +18,19 @@ const CATEGORY_ID = 91;
 function buildSearchUrl(params) {
   const url = new URL('https://www.marktplaats.nl/lrp/api/search');
   if (params.query) url.searchParams.set('query', params.query);
-  if (params.brand) url.searchParams.set('attributesByKey[0]', `merk:${params.brand}`);
+  if (params.brand) url.searchParams.set('attributesByKey[0]', `make:${params.brand}`);
   if (params.model) url.searchParams.set('attributesByKey[1]', `model:${params.model}`);
-  if (params.minYear) url.searchParams.set('attributeRanges[0]', `bouwjaar:${params.minYear}:`);
-  if (params.maxYear) url.searchParams.set('attributeRanges[0]', `bouwjaar::${params.maxYear}`);
-  if (params.minYear && params.maxYear) url.searchParams.set('attributeRanges[0]', `bouwjaar:${params.minYear}:${params.maxYear}`);
-  if (params.maxKm) url.searchParams.set('attributeRanges[1]', `kilometrageRange::${params.maxKm}`);
+  if (params.minYear && params.maxYear) url.searchParams.set('attributeRanges[0]', `constructionYear:${params.minYear}:${params.maxYear}`);
+  else if (params.minYear) url.searchParams.set('attributeRanges[0]', `constructionYear:${params.minYear}:`);
+  else if (params.maxYear) url.searchParams.set('attributeRanges[0]', `constructionYear::${params.maxYear}`);
+  if (params.maxKm) url.searchParams.set('attributeRanges[1]', `mileage::${params.maxKm}`);
   if (params.minPrice) url.searchParams.set('priceFrom', params.minPrice);
   if (params.maxPrice) url.searchParams.set('priceTo', params.maxPrice);
   url.searchParams.set('l1CategoryId', CATEGORY_ID);
-  url.searchParams.set('limit', '50');
+  url.searchParams.set('limit', '100');
   url.searchParams.set('offset', '0');
+  url.searchParams.set('sortBy', 'SORT_INDEX');
+  url.searchParams.set('sortOrder', 'DECREASING');
   return url.toString();
 }
 
