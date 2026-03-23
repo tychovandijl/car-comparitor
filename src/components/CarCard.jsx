@@ -73,11 +73,15 @@ export default function CarCard({ car, isSelected, onToggleCompare }) {
       {/* Content */}
       <div className="p-3 flex flex-col flex-1 gap-2">
         <div>
-          <h3 className="font-semibold text-gray-900 leading-tight line-clamp-2 text-sm">{car.title}</h3>
+          <h3 className="font-semibold text-gray-900 leading-tight line-clamp-1 text-sm">{car.brand} {car.model}</h3>
+          {car.version && (
+            <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{car.version}</p>
+          )}
           <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
             <span>{car.year || '—'}</span>
             <span>·</span>
             <span>{formatKm(car.mileage)}</span>
+            {car.fuel && <><span>·</span><span>{car.fuel}</span></>}
           </div>
         </div>
 

@@ -41,20 +41,34 @@ function mapListing(item) {
   const price = item.priceInfo?.priceCents ? item.priceInfo.priceCents / 100 : null;
   const year = attrs.constructionYear ? parseInt(attrs.constructionYear) : null;
   const mileage = attrs.mileage ? parseInt(String(attrs.mileage).replace(/\./g, '').match(/\d+/)?.[0]) ?? null : null;
+  const brand = attrs.make || attrs.merk || extractBrand(item.title);
+  const model = attrs.model || '';
+  const version = extractVersion(item.title || '', brand, model);
 
   return {
     id: `marktplaats-${item.itemId}`,
     source: 'marktplaats',
     title: item.title || '',
-    brand: attrs.make || attrs.merk || extractBrand(item.title),
-    model: attrs.model || '',
+    brand,
+    model,
+    version,
     year,
     mileage,
     price,
+    fuel: attrs.fuel || null,
+    transmission: attrs.transmission || null,
     features: extractFeatures(item),
     imageUrl: item.pictures?.[0]?.mediumUrl || item.pictures?.[0]?.extraExtraLargeUrl || null,
     adUrl: `https://www.marktplaats.nl${item.vipUrl || ''}`,
   };
+}
+
+function extractVersion(title, brand, model) {
+  if (!title) return '';
+  const prefix = [brand, model].filter(Boolean).join(' ');
+  const idx = prefix ? title.toLowerCase().indexOf(prefix.toLowerCase()) : -1;
+  if (idx === -1) return '';
+  return title.slice(idx + prefix.length).trim().replace(/^[-:,\s]+/, '').replace(/\.$/, '').trim();
 }
 
 function extractBrand(title) {

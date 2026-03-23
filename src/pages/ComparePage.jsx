@@ -64,6 +64,10 @@ export default function ComparePage({ onRemove }) {
       ),
     },
     {
+      label: 'Versie',
+      render: car => <span className="text-gray-700">{car.version || '—'}</span>,
+    },
+    {
       label: 'Prijs',
       render: car => (
         <span>
@@ -91,18 +95,25 @@ export default function ComparePage({ onRemove }) {
       ),
     },
     {
+      label: 'Brandstof',
+      render: car => <span>{car.fuel || '—'}</span>,
+    },
+    {
+      label: 'Transmissie',
+      render: car => <span>{car.transmission || '—'}</span>,
+    },
+    {
       label: 'Uitrusting',
       render: car => (
         <div>
           <div className="flex flex-wrap gap-1 mb-1">
-            {(car.features || []).slice(0, 6).map(f => (
+            {(car.features || []).map(f => (
               <span key={f} className="text-[10px] bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{f}</span>
             ))}
-            {(car.features || []).length > 6 && (
-              <span className="text-[10px] text-gray-400">+{(car.features || []).length - 6} meer</span>
-            )}
           </div>
-          <span className="text-xs text-gray-400">{(car.features || []).length} items</span>
+          {(car.features || []).length > 0 && (
+            <span className="text-xs text-gray-400">{car.features.length} items</span>
+          )}
           <BestMark isBest={(car.features || []).length === bestFeatures} />
         </div>
       ),

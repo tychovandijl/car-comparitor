@@ -42,6 +42,19 @@ function extractModelFromQuery(query, brand) {
   return query.trim().slice(brand.length).trim();
 }
 
+function extractVersionFromUrl(url, make, model) {
+  if (!url || !make || !model) return '';
+  // URL formaat: /aanbod/hyundai-tucson-1-6-t-gdi-plug-in-hybrid-exellence-4wd-...-uuid
+  const slug = url.split('/').pop() || '';
+  const prefix = `${make}-${model}`.toLowerCase().replace(/\s+/g, '-');
+  const idx = slug.toLowerCase().indexOf(prefix);
+  if (idx === -1) return '';
+  const rest = slug.slice(idx + prefix.length).replace(/^-/, '');
+  // Verwijder UUID achteraan (32 hex chars met streepjes)
+  return rest.replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, '')
+    .replace(/-/g, ' ').trim();
+}
+
 function parsePrice(priceFormatted) {
   if (!priceFormatted) return null;
   const digits = priceFormatted.replace(/[^0-9]/g, '');
@@ -68,11 +81,17 @@ function mapListing(item) {
   const mileage = parseMileage(item.vehicle?.mileageInKm);
   const year = parseYear(item.vehicleDetails);
 
-  const features = [];
   const detail = (label) => (item.vehicleDetails || []).find(d => d.ariaLabel === label)?.data;
-  if (detail('Transmissie')) features.push(detail('Transmissie'));
-  if (detail('Brandstof')) features.push(detail('Brandstof'));
+  const fuel = detail('Brandstof') || item.vehicle?.fuel || null;
+  const transmission = detail('Transmissie') || null;
+
+  const features = [];
+  if (transmission) features.push(transmission);
+  if (fuel) features.push(fuel);
   if (item.vehicle?.bodyType) features.push(item.vehicle.bodyType);
+
+  // Versie uit URL-slug extraheren (bijv. "tucson-1-6-t-gdi-plug-in-hybrid-exellence")
+  const version = extractVersionFromUrl(item.url, item.vehicle?.make, item.vehicle?.model);
 
   const imageUrl = typeof item.images?.[0] === 'string'
     ? item.images[0]
@@ -84,9 +103,12 @@ function mapListing(item) {
     title: `${item.vehicle?.make || ''} ${item.vehicle?.model || ''}`.trim(),
     brand: item.vehicle?.make || '',
     model: item.vehicle?.model || '',
+    version,
     year,
     mileage,
     price,
+    fuel,
+    transmission,
     features: [...new Set(features.filter(Boolean))],
     imageUrl,
     adUrl: item.url ? `https://www.autoscout24.nl${item.url}` : null,
