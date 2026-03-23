@@ -39,7 +39,7 @@ function mapListing(item) {
   const price = item.priceInfo?.priceCents ? item.priceInfo.priceCents / 100 : null;
   const year = attrs.bouwjaar ? parseInt(attrs.bouwjaar) : null;
   const mileage = attrs.kilometrageRange
-    ? parseInt(attrs.kilometrageRange.replace(/[^0-9]/g, '')) || null
+    ? parseInt(String(attrs.kilometrageRange).replace(/\./g, '').match(/\d+/)?.[0]) || null
     : null;
 
   return {

@@ -10,31 +10,7 @@ const HEADERS = {
   'Referer': 'https://www.autoscout24.nl/',
 };
 
-// AutoScout24 interne API endpoint
-const AS24_API_BASE = 'https://www.autoscout24.nl/lst';
-
-function buildSearchUrl(params) {
-  const url = new URL(AS24_API_BASE);
-  if (params.brand) url.searchParams.set('make', params.brand.toLowerCase());
-  if (params.model) url.searchParams.set('model', params.model.toLowerCase());
-  if (params.minYear) url.searchParams.set('fregfrom', params.minYear);
-  if (params.maxYear) url.searchParams.set('fregto', params.maxYear);
-  if (params.minPrice) url.searchParams.set('pricefrom', params.minPrice);
-  if (params.maxPrice) url.searchParams.set('priceto', params.maxPrice);
-  if (params.maxKm) url.searchParams.set('kmto', params.maxKm);
-  if (params.query && !params.brand) url.searchParams.set('search', params.query);
-  url.searchParams.set('atype', 'C'); // C = auto
-  url.searchParams.set('cy', 'NL');
-  url.searchParams.set('ustate', 'N%2CU'); // nieuw en gebruikt
-  url.searchParams.set('size', '50');
-  url.searchParams.set('page', '1');
-  url.searchParams.set('sort', 'standard');
-  url.searchParams.set('ocs_listing', 'include');
-  return url.toString();
-}
-
-// AutoScout24 heeft een interne JSON API via hun GraphQL of __NEXT_DATA__
-// We gebruiken hun listing API direct
+// AutoScout24 interne JSON API
 async function fetchAS24Json(params) {
   // AutoScout24 heeft een publieke search API
   const apiUrl = new URL('https://www.autoscout24.nl/api/v1/search');
@@ -56,7 +32,7 @@ async function fetchAS24Json(params) {
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
     },
-    timeout: 10000,
+    timeout: 5000,
   });
   return response.data;
 }
