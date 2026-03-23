@@ -72,9 +72,62 @@ function scoreFuel(fuel) {
   return 50;
 }
 
-function scoreFeatures(featureCount, maxFeatures) {
-  if (maxFeatures === 0) return 50;
-  return clamp((featureCount / maxFeatures) * 100, 0, 100);
+// Vaste punten per feature-categorie (keyword-matching, case-insensitief)
+// Totaal van ~80-100 pts = zeer goed uitgeruste auto; score wordt gecapt op 100
+const FEATURE_SCORES = {
+  // Veiligheid & rijhulp
+  'adaptieve cruise':        18,
+  'adaptive cruise':         18,
+  'rijstrookassistent':      15,
+  'lane assist':             15,
+  'rijstrookwaarschuwing':   12,
+  'dodehoekwaarschuwing':    15,
+  'blindspot':               15,
+  'noodremassistent':        15,
+  'head-up display':         15,
+  'head up display':         15,
+  '360':                     15,
+  'surround view':           15,
+  // Camera & sensoren
+  'parkeercamera':           10,
+  'achteruitrijcamera':      10,
+  'parkeersensor':            8,
+  'parkeerassistent':        10,
+  // Comfort & tech
+  'navigatie':               10,
+  'apple carplay':           10,
+  'android auto':            10,
+  'carplay':                 10,
+  'panoramadak':             12,
+  'schuifdak':               10,
+  'lederen':                 10,
+  'leder ':                  10,
+  'stoelverwarming':          8,
+  'stuurverwarming':          6,
+  'elektrische stoelen':      8,
+  'keyless':                  8,
+  'draadloos opladen':        8,
+  'wireless charging':        8,
+  'climate control':         10,
+  'dual zone':               10,
+  'airco':                    6,
+  'trekhaak':                 8,
+  'cruise control':           8,
+  'lichtmetalen':             4,
+  'sportvelgen':              4,
+  'bluetooth':                4,
+};
+
+function scoreFeatures(features) {
+  if (!features || features.length === 0) return 0;
+  let total = 0;
+  for (const feature of features) {
+    const f = feature.toLowerCase();
+    for (const [keyword, pts] of Object.entries(FEATURE_SCORES)) {
+      if (f.includes(keyword)) { total += pts; break; }
+    }
+  }
+  return clamp(total, 0, 100);
 }
 
 function getComparablePrices(car, allCars) {
@@ -110,8 +163,6 @@ function getScoreLabel(scoreClass) {
 function scoreCars(cars) {
   if (!cars.length) return [];
 
-  const maxFeatures = Math.max(...cars.map(c => (c.features || []).length), 1);
-
   return cars.map(car => {
     const comparablePrices = getComparablePrices(car, cars);
 
@@ -119,7 +170,7 @@ function scoreCars(cars) {
     const mileageScore = scoreMileage(car.mileage);
     const yearScore = scoreYear(car.year);
     const fuelScore = scoreFuel(car.fuel);
-    const featuresScore = scoreFeatures((car.features || []).length, maxFeatures);
+    const featuresScore = scoreFeatures(car.features);
 
     const total = Math.round(
       priceScore * WEIGHTS.price +
