@@ -23,6 +23,7 @@ async function aggregateCars(params) {
     if (params.minPrice && car.price !== null && car.price < params.minPrice) return false;
     if (params.maxPrice && car.price !== null && car.price > params.maxPrice) return false;
     if (params.fuel && car.fuel && !car.fuel.toLowerCase().includes(params.fuel.toLowerCase())) return false;
+    if (params.version && car.version && !car.version.toLowerCase().includes(params.version.toLowerCase())) return false;
     return true;
   });
 }

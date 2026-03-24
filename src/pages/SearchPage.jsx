@@ -27,6 +27,7 @@ export default function SearchPage({ compareList, onToggleCompare }) {
   const [availableBrands, setAvailableBrands] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
   const [availableFuels, setAvailableFuels] = useState([]);
+  const [availableVersions, setAvailableVersions] = useState([]);
   const abortRef = useRef(null);
 
   const fetchCars = useCallback(async (activeFilters) => {
@@ -49,6 +50,7 @@ export default function SearchPage({ compareList, onToggleCompare }) {
     if (activeFilters.maxKm) params.maxKm = activeFilters.maxKm;
     if (activeFilters.sort) params.sort = activeFilters.sort;
     if (activeFilters.fuel) params.fuel = activeFilters.fuel;
+    if (activeFilters.version) params.version = activeFilters.version;
     if (activeFilters.source) params.source = activeFilters.source;
 
     try {
@@ -60,6 +62,7 @@ export default function SearchPage({ compareList, onToggleCompare }) {
       setAvailableBrands(res.data.filters?.brands || []);
       setAvailableModels(res.data.filters?.models || []);
       setAvailableFuels(res.data.filters?.fuels || []);
+      setAvailableVersions(res.data.filters?.versions || []);
     } catch (err) {
       if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
         setError(err.response?.data?.error || 'Er ging iets mis. Probeer het opnieuw.');
@@ -131,6 +134,7 @@ export default function SearchPage({ compareList, onToggleCompare }) {
           brands={availableBrands}
           models={availableModels}
           fuels={availableFuels}
+          versions={availableVersions}
         />
         <div className="flex-1 min-w-0">
           <CarList

@@ -60,6 +60,7 @@ module.exports = async function (context, req) {
     const brands = [...new Set(sorted.map(c => c.brand).filter(Boolean))].sort();
     const models = [...new Set(sorted.map(c => c.model).filter(Boolean))].sort();
     const fuels = [...new Set(sorted.map(c => c.fuel).filter(Boolean))].sort();
+    const versions = [...new Set(sorted.map(c => c.version).filter(Boolean))].sort();
 
     context.res = {
       status: 200,
@@ -67,7 +68,7 @@ module.exports = async function (context, req) {
       body: JSON.stringify({
         total: sorted.length,
         cars: sorted,
-        filters: { brands, models, fuels },
+        filters: { brands, models, fuels, versions },
       }),
     };
   } catch (err) {
