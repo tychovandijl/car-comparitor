@@ -56,9 +56,10 @@ module.exports = async function (context, req) {
       return (b.scores?.total || 0) - (a.scores?.total || 0);
     });
 
-    // Unieke merken en modellen verzamelen voor filter-dropdowns
+    // Unieke merken, modellen en brandstoftypes verzamelen voor filter-dropdowns
     const brands = [...new Set(sorted.map(c => c.brand).filter(Boolean))].sort();
     const models = [...new Set(sorted.map(c => c.model).filter(Boolean))].sort();
+    const fuels = [...new Set(sorted.map(c => c.fuel).filter(Boolean))].sort();
 
     context.res = {
       status: 200,
@@ -66,7 +67,7 @@ module.exports = async function (context, req) {
       body: JSON.stringify({
         total: sorted.length,
         cars: sorted,
-        filters: { brands, models },
+        filters: { brands, models, fuels },
       }),
     };
   } catch (err) {

@@ -18,10 +18,11 @@ async function aggregateCars(params) {
     if (r.status === 'fulfilled') cars.push(...r.value);
   });
 
-  // Client-side prijsfilter als fallback (externe API's filteren niet altijd correct)
+  // Client-side filters als fallback
   return cars.filter(car => {
     if (params.minPrice && car.price !== null && car.price < params.minPrice) return false;
     if (params.maxPrice && car.price !== null && car.price > params.maxPrice) return false;
+    if (params.fuel && car.fuel && !car.fuel.toLowerCase().includes(params.fuel.toLowerCase())) return false;
     return true;
   });
 }

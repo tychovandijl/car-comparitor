@@ -19,7 +19,7 @@ const SOURCE_OPTIONS = [
   { value: 'autoscout24', label: 'AutoScout24' },
 ];
 
-export default function FilterPanel({ filters, onChange, brands = [], models = [] }) {
+export default function FilterPanel({ filters, onChange, brands = [], models = [], fuels = [] }) {
   function update(key, value) {
     onChange({ ...filters, [key]: value });
   }
@@ -29,6 +29,7 @@ export default function FilterPanel({ filters, onChange, brands = [], models = [
       query: filters.query,
       brand: '',
       model: '',
+      fuel: '',
       minYear: '',
       maxYear: '',
       minPrice: '',
@@ -115,6 +116,21 @@ export default function FilterPanel({ filters, onChange, brands = [], models = [
               {models.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
+
+          {/* Brandstof */}
+          {fuels.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Brandstof</label>
+              <select
+                value={filters.fuel || ''}
+                onChange={e => update('fuel', e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                <option value="">Alle brandstoftypes</option>
+                {fuels.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Bouwjaar */}
           <div>
