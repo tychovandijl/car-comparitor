@@ -1,5 +1,6 @@
 const { aggregateCars } = require('../services/aggregator');
 const { scoreCars } = require('../services/scoring');
+const { normalizeVersion } = require('../services/normalize');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -62,7 +63,9 @@ module.exports = async function (context, req) {
     const brands = [...new Set(sorted.map(c => c.brand).filter(Boolean))].sort();
     const models = [...new Set(sorted.map(c => c.model).filter(Boolean))].sort();
     const fuels = [...new Set(sorted.map(c => c.fuel).filter(Boolean))].sort();
-    const versions = [...new Set(sorted.map(c => c.version).filter(Boolean))].sort();
+    const versions = [...new Set(
+      sorted.map(c => normalizeVersion(c.version)).filter(Boolean)
+    )].sort();
 
     context.res = {
       status: 200,
