@@ -49,7 +49,9 @@ module.exports = async function (context, req) {
       if (sortBy === 'price_asc') return (a.price || 0) - (b.price || 0);
       if (sortBy === 'price_desc') return (b.price || 0) - (a.price || 0);
       if (sortBy === 'km_asc') return (a.mileage || 0) - (b.mileage || 0);
+      if (sortBy === 'km_desc') return (b.mileage || 0) - (a.mileage || 0);
       if (sortBy === 'year_desc') return (b.year || 0) - (a.year || 0);
+      if (sortBy === 'year_asc') return (a.year || 0) - (b.year || 0);
       // Standaard: score hoog naar laag
       return (b.scores?.total || 0) - (a.scores?.total || 0);
     });

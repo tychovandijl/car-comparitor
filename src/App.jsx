@@ -32,6 +32,7 @@ export default function App() {
           <a href="/" className="flex items-center gap-2 text-blue-700 font-bold text-xl">
             <span className="text-2xl">🚗</span>
             AutoVergelijker
+            <span className="text-[10px] font-normal text-gray-400 bg-gray-100 rounded px-1.5 py-0.5 ml-1">v1.3</span>
           </a>
           <span className="text-sm text-gray-500 hidden sm:block">
             Vergelijk auto's van Marktplaats &amp; AutoScout24

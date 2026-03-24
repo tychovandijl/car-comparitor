@@ -7,8 +7,10 @@ const SORT_OPTIONS = [
   { value: 'score', label: 'Beste score' },
   { value: 'price_asc', label: 'Prijs laag → hoog' },
   { value: 'price_desc', label: 'Prijs hoog → laag' },
-  { value: 'km_asc', label: 'Laagste km-stand' },
-  { value: 'year_desc', label: 'Nieuwste eerst' },
+  { value: 'km_asc', label: 'Kilometerstand laag → hoog' },
+  { value: 'km_desc', label: 'Kilometerstand hoog → laag' },
+  { value: 'year_desc', label: 'Bouwjaar nieuw → oud' },
+  { value: 'year_asc', label: 'Bouwjaar oud → nieuw' },
 ];
 
 const SOURCE_OPTIONS = [
