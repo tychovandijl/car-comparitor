@@ -23,7 +23,6 @@ function buildSearchUrl(params) {
   url.searchParams.set('cy', 'NL');
   url.searchParams.set('ustate', 'N,U');
   url.searchParams.set('size', '20');
-  url.searchParams.set('page', '1');
   if (params.minYear) url.searchParams.set('fregfrom', params.minYear);
   if (params.maxYear) url.searchParams.set('fregto', params.maxYear);
   if (params.minPrice) url.searchParams.set('pricefrom', params.minPrice);
@@ -132,6 +131,19 @@ function mapListing(item) {
   };
 }
 
+const PAGES_TO_FETCH = 5; // 5 × 20 = max 100 resultaten
+
+async function fetchPage(baseUrl, page) {
+  const url = new URL(baseUrl);
+  url.searchParams.set('page', page);
+  const response = await axios.get(url.toString(), { headers: HEADERS, timeout: 10000 });
+  const html = response.data;
+  const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!match) return [];
+  const json = JSON.parse(match[1]);
+  return json.props?.pageProps?.listings || [];
+}
+
 async function searchCars(params) {
   const cacheKey = JSON.stringify(params);
   const cached = cache.get(cacheKey);
@@ -139,21 +151,33 @@ async function searchCars(params) {
     return cached.data;
   }
 
-  const url = buildSearchUrl(params);
+  const baseUrl = buildSearchUrl(params);
 
   try {
-    const response = await axios.get(url, { headers: HEADERS, timeout: 10000 });
-    const html = response.data;
+    // Haal eerste pagina op om te bepalen hoeveel pagina's er zijn
+    const firstPageListings = await fetchPage(baseUrl, 1);
 
-    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/);
-    if (!match) return [];
+    // Haal overige pagina's tegelijk op
+    const otherPages = await Promise.allSettled(
+      Array.from({ length: PAGES_TO_FETCH - 1 }, (_, i) => fetchPage(baseUrl, i + 2))
+    );
 
-    const json = JSON.parse(match[1]);
-    const listings = json.props?.pageProps?.listings || [];
+    const allListings = [
+      ...firstPageListings,
+      ...otherPages.flatMap(r => r.status === 'fulfilled' ? r.value : []),
+    ];
 
-    const cars = listings
+    // Dedupliceer op id
+    const seen = new Set();
+    const unique = allListings.filter(item => {
+      if (!item.id || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+
+    const cars = unique
       .map(mapListing)
-      .filter(c => c.price && c.year);
+      .filter(c => c.price);  // jaar is niet altijd verplicht
 
     cache.set(cacheKey, { data: cars, timestamp: Date.now() });
     return cars;
