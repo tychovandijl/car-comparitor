@@ -15,11 +15,58 @@ const HEADERS = {
 // Marktplaats categorie-ID voor personenauto's: 91
 const CATEGORY_ID = 91;
 
+// Merknamen zoals Marktplaats ze kent (inclusief veelgebruikte aliassen)
+const BRAND_ALIASES = {
+  'mercedes': 'Mercedes-Benz',
+  'mercedes benz': 'Mercedes-Benz',
+  'mercedes-benz': 'Mercedes-Benz',
+  'vw': 'Volkswagen',
+  'bmw': 'BMW',
+  'land rover': 'Land Rover',
+  'alfa': 'Alfa Romeo',
+  'alfa romeo': 'Alfa Romeo',
+  'ds': 'DS',
+  'aston': 'Aston Martin',
+  'aston martin': 'Aston Martin',
+};
+
+function normalizeBrand(brand) {
+  if (!brand) return brand;
+  return BRAND_ALIASES[brand.toLowerCase()] || brand;
+}
+
+function extractBrandFromQuery(query) {
+  if (!query) return '';
+  // Probeer eerst twee-woords merknamen, dan één woord
+  const q = query.trim().toLowerCase();
+  const twoWord = q.split(/\s+/).slice(0, 2).join(' ');
+  if (BRAND_ALIASES[twoWord]) return BRAND_ALIASES[twoWord];
+  const oneWord = q.split(/\s+/)[0];
+  if (BRAND_ALIASES[oneWord]) return BRAND_ALIASES[oneWord];
+  // Geef het eerste woord terug met hoofdletter (bijv. "Hyundai")
+  return query.trim().split(/\s+/)[0] || '';
+}
+
+function extractModelFromQuery(query, brand) {
+  if (!query || !brand) return '';
+  const idx = query.toLowerCase().indexOf(brand.toLowerCase());
+  if (idx === -1) return query.trim().split(/\s+/).slice(1).join(' ');
+  return query.slice(idx + brand.length).trim();
+}
+
 function buildSearchUrl(params) {
   const url = new URL('https://www.marktplaats.nl/lrp/api/search');
-  if (params.query) url.searchParams.set('query', params.query);
-  if (params.brand) url.searchParams.set('attributesByKey[0]', `make:${params.brand}`);
-  if (params.model) url.searchParams.set('attributesByKey[1]', `model:${params.model}`);
+
+  const brand = normalizeBrand(params.brand || extractBrandFromQuery(params.query));
+  const model = params.model || (brand ? extractModelFromQuery(params.query, brand) : '');
+
+  // Gebruik attribuutfilters als merk bekend is, anders vrije tekst
+  if (brand) {
+    url.searchParams.set('attributesByKey[0]', `make:${brand}`);
+    if (model) url.searchParams.set('attributesByKey[1]', `model:${model}`);
+  } else if (params.query) {
+    url.searchParams.set('query', params.query);
+  }
   if (params.minYear && params.maxYear) url.searchParams.set('attributeRanges[0]', `constructionYear:${params.minYear}:${params.maxYear}`);
   else if (params.minYear) url.searchParams.set('attributeRanges[0]', `constructionYear:${params.minYear}:`);
   else if (params.maxYear) url.searchParams.set('attributeRanges[0]', `constructionYear::${params.maxYear}`);
