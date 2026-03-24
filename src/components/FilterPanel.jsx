@@ -119,19 +119,22 @@ export default function FilterPanel({ filters, onChange, brands = [], models = [
           </div>
 
           {/* Versie/uitvoering */}
-          {versions.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Versie / uitvoering</label>
-              <select
-                value={filters.version || ''}
-                onChange={e => update('version', e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              >
-                <option value="">Alle versies</option>
-                {versions.map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Versie / uitvoering</label>
+            <input
+              list="versions-list"
+              type="text"
+              placeholder="bv. PHEV, 1.6 T-GDi, Excellence"
+              value={filters.version || ''}
+              onChange={e => update('version', e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
+            {versions.length > 0 && (
+              <datalist id="versions-list">
+                {versions.map(v => <option key={v} value={v} />)}
+              </datalist>
+            )}
+          </div>
 
           {/* Brandstof */}
           {fuels.length > 0 && (

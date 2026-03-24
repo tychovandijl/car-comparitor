@@ -30,6 +30,8 @@ module.exports = async function (context, req) {
     query: q.query || '',
     brand: q.brand || '',
     model: q.model || '',
+    fuel: q.fuel || '',
+    version: q.version || '',
     minYear: q.minYear ? parseInt(q.minYear) : null,
     maxYear: q.maxYear ? parseInt(q.maxYear) : null,
     minPrice: q.minPrice ? parseInt(q.minPrice) : null,
