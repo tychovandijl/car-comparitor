@@ -1,6 +1,8 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, X, Loader2 } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const SOURCE_LABELS = { marktplaats: 'Marktplaats', autoscout24: 'AutoScout24' };
 const SOURCE_COLORS = { marktplaats: 'text-orange-600', autoscout24: 'text-blue-600' };
@@ -34,7 +36,31 @@ function BestMark({ isBest }) {
 export default function ComparePage({ onRemove }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const cars = location.state?.cars || [];
+  const baseCars = location.state?.cars || [];
+  const [cars, setCars] = useState(baseCars);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  useEffect(() => {
+    const as24Cars = baseCars.filter(c => c.source === 'autoscout24' && c.adUrl);
+    if (as24Cars.length === 0) return;
+
+    setLoadingDetail(true);
+    Promise.all(
+      as24Cars.map(car =>
+        fetch(`${API_BASE}/car-detail?url=${encodeURIComponent(car.adUrl)}`)
+          .then(r => r.json())
+          .then(data => ({ id: car.id, equipment: data.equipment || [] }))
+          .catch(() => ({ id: car.id, equipment: [] }))
+      )
+    ).then(results => {
+      setCars(prev => prev.map(car => {
+        const detail = results.find(r => r.id === car.id);
+        if (!detail || detail.equipment.length === 0) return car;
+        const merged = [...new Set([...(car.features || []), ...detail.equipment])];
+        return { ...car, features: merged };
+      }));
+    }).finally(() => setLoadingDetail(false));
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (cars.length === 0) {
     return (
@@ -106,7 +132,13 @@ export default function ComparePage({ onRemove }) {
       label: 'Uitrusting',
       render: car => {
         const scored = car.scores?.featuresDetail?.scored || [];
-        const unscored = car.scores?.featuresDetail?.unscored || [];
+        // Combineer ongescoorde features uit scoring + eventuele extra features van detailpagina
+        const scoredNames = new Set(scored.map(f => f.name));
+        const allFeatures = car.features || [];
+        const unscored = [
+          ...(car.scores?.featuresDetail?.unscored || []),
+          ...allFeatures.filter(f => !scoredNames.has(f) && !(car.scores?.featuresDetail?.unscored || []).includes(f)),
+        ];
         return (
           <div className="space-y-2">
             {scored.length > 0 && (
@@ -187,7 +219,10 @@ export default function ComparePage({ onRemove }) {
           <ArrowLeft size={16} />
           Terug
         </button>
-        <h1 className="text-xl font-bold text-gray-900">Vergelijking</h1>
+        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          Vergelijking
+          {loadingDetail && <Loader2 size={16} className="animate-spin text-blue-400" title="Uitrusting ophalen..." />}
+        </h1>
         <span className="text-sm text-gray-400">({cars.length} auto's)</span>
       </div>
 
