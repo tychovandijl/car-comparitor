@@ -2,6 +2,14 @@ const marktplaats = require('./marktplaats');
 const autoscout24 = require('./autoscout24');
 const { normalizeVersion } = require('./normalize');
 
+// Zelfde brand-extractie als in marktplaats.js, voor client-side check
+function brandFromParams(params) {
+  const explicit = (params.brand || '').toLowerCase().trim();
+  if (explicit) return explicit;
+  const query = (params.query || '').toLowerCase().trim();
+  return query.split(/\s+/)[0] || '';
+}
+
 async function aggregateCars(params) {
   const sources = params.source || 'all';
 
@@ -19,12 +27,15 @@ async function aggregateCars(params) {
     if (r.status === 'fulfilled') cars.push(...r.value);
   });
 
-  // Client-side filters als fallback
+  // Client-side filters — zekerheid dat geen verkeerde resultaten doorkomen
+  const searchedBrand = brandFromParams(params);
   return cars.filter(car => {
     if (params.minPrice && car.price !== null && car.price < params.minPrice) return false;
     if (params.maxPrice && car.price !== null && car.price > params.maxPrice) return false;
     if (params.fuel && car.fuel && !car.fuel.toLowerCase().includes(params.fuel.toLowerCase())) return false;
     if (params.version && car.version && !normalizeVersion(car.version).toLowerCase().includes(params.version.toLowerCase())) return false;
+    // Merkfilter: car.brand moet de gezochte merknaam bevatten
+    if (searchedBrand && car.brand && !car.brand.toLowerCase().includes(searchedBrand)) return false;
     return true;
   });
 }
